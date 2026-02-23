@@ -40,6 +40,11 @@ logger = logging.getLogger(__name__)
 # Global flag for graceful shutdown
 shutdown_requested = False
 
+# Default prompt used when the user does not supply one at upload time
+DEFAULT_SUMMARY_PROMPT = (
+    "Summarize the key points of this document in 3-5 concise bullet points."
+)
+
 
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully"""
@@ -140,11 +145,12 @@ def process_pdf_from_s3(task_id: str, s3_bucket: str, s3_key: str, filename: str
         text, page_count = extract_text_from_pdf(temp_file_path)
         update_task_progress(task_id, 40, "PROCESSING")
         
-        # Step 3.1: Generate summary if a prompt was provided
+        # Step 3.1: Generate summary using the user's prompt or a sensible default
         summary = None
-        if prompt and text.strip():
-            logger.info(f"🤖 Generating summary for {filename} using prompt...")
-            summary = generate_summary(text, prompt)
+        effective_prompt = prompt or DEFAULT_SUMMARY_PROMPT
+        if text.strip():
+            logger.info(f"🤖 Generating summary for {filename}...")
+            summary = generate_summary(text, effective_prompt)
             if summary:
                 logger.info(f"✅ Summary generated ({len(summary)} chars)")
             else:
@@ -238,12 +244,11 @@ def process_pdf_from_s3(task_id: str, s3_bucket: str, s3_key: str, filename: str
             document = db.query(Document).filter(Document.id == int(task_id)).first()
             if document:
                 document.status = "COMPLETED"
-                document.result_text = text  # Save extracted text
+                document.result_text = text
                 document.page_count = page_count
                 document.extraction_time_seconds = extraction_time
                 document.completed_at = end_time
-                if prompt:
-                    document.prompt = prompt
+                document.prompt = effective_prompt
                 if summary:
                     document.summary = summary
                 db.commit()

@@ -396,6 +396,8 @@ def show_upload_and_documents_tab():
                     st.caption(f"📄 {doc.get('page_count')} pages")
                 if doc.get("result_text"):
                     st.caption(f"📝 {len(doc.get('result_text', ''))} chars")
+                if doc.get("summary"):
+                    st.caption("🤖 Summary available")
             
             with col4:
                 if ready_for_chat:
@@ -411,6 +413,18 @@ def show_upload_and_documents_tab():
                 else:
                     st.button("⏳ Wait", key=f"wait_{doc_id}", disabled=True, use_container_width=True)
             
+            # Inline summary preview (always shown when available)
+            if doc.get("summary"):
+                with st.expander("🤖 AI Summary", expanded=False):
+                    st.success(doc["summary"])
+                    st.download_button(
+                        "💾 Download Summary",
+                        doc["summary"],
+                        file_name=f"{filename}_summary.txt",
+                        mime="text/plain",
+                        key=f"dl_summary_{doc_id}"
+                    )
+
             # Inline result panel (toggled by the Result button)
             if st.session_state.get(f"show_result_{doc_id}", False):
                 show_task_result(str(doc_id))

@@ -69,6 +69,8 @@ class DocumentResponse(DocumentBase):
     user_id: int
     status: str
     result_text: Optional[str] = None
+    prompt: Optional[str] = None
+    summary: Optional[str] = None
     error_message: Optional[str] = None
     page_count: Optional[int] = None
     extraction_time_seconds: Optional[float] = None

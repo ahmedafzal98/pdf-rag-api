@@ -232,7 +232,8 @@ async def upload_files(
             user_id=user.id,
             filename=file.filename,
             s3_key=s3_key,
-            status="PENDING"
+            status="PENDING",
+            prompt=prompt or None
         )
         db.add(document)
         await db.commit()
